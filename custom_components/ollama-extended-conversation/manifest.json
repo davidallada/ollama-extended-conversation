@@ -1,8 +1,8 @@
 {
-  "domain": "ollama",
-  "name": "Ollama",
+  "domain": "ollama-extended-conversation",
+  "name": "Ollama extended Conversation",
   "after_dependencies": ["assist_pipeline", "intent"],
-  "codeowners": ["@synesthesiam"],
+  "codeowners": ["@davidallada"],
   "config_flow": true,
   "dependencies": ["conversation"],
   "documentation": "https://www.home-assistant.io/integrations/ollama",
