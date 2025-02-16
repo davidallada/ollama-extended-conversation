@@ -9,7 +9,7 @@ import httpx
 import ollama
 
 from homeassistant.config_entries import ConfigEntry
-from homeassistant.const import CONF_URL, Platform
+from homeassistant.const import CONF_URL, CONF_API_KEY, Platform
 from homeassistant.core import HomeAssistant
 from homeassistant.exceptions import ConfigEntryNotReady
 from homeassistant.helpers import config_validation as cv
@@ -34,6 +34,7 @@ __all__ = [
     "CONF_NUM_CTX",
     "CONF_PROMPT",
     "CONF_URL",
+    "CONF_API_KEY",
     "DOMAIN",
 ]
 
@@ -44,7 +45,11 @@ PLATFORMS = (Platform.CONVERSATION,)
 async def async_setup_entry(hass: HomeAssistant, entry: ConfigEntry) -> bool:
     """Set up Ollama from a config entry."""
     settings = {**entry.data, **entry.options}
-    client = ollama.AsyncClient(host=settings[CONF_URL], verify=get_default_context())
+
+    headers = {}
+    if api_key := settings.get("CONF_API_KEY"):
+        headers["Authorization"] = f"Bearer {api_key}"
+    client = ollama.AsyncClient(host=settings[CONF_URL], verify=get_default_context(), headers=headers)
     try:
         async with asyncio.timeout(DEFAULT_TIMEOUT):
             await client.list()

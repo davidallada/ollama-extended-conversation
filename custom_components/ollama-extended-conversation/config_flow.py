@@ -18,7 +18,7 @@ from homeassistant.config_entries import (
     ConfigFlowResult,
     OptionsFlow,
 )
-from homeassistant.const import CONF_LLM_HASS_API, CONF_URL
+from homeassistant.const import CONF_LLM_HASS_API, CONF_URL, CONF_API_KEY
 from homeassistant.core import HomeAssistant
 from homeassistant.helpers import llm
 from homeassistant.helpers.selector import (
@@ -60,6 +60,7 @@ STEP_USER_DATA_SCHEMA = vol.Schema(
         vol.Required(CONF_URL): TextSelector(
             TextSelectorConfig(type=TextSelectorType.URL)
         ),
+        vol.Required(CONF_API_KEY): str
     }
 )
 
@@ -73,6 +74,7 @@ class OllamaConfigFlow(ConfigFlow, domain=DOMAIN):
         """Initialize config flow."""
         self.url: str | None = None
         self.model: str | None = None
+        self.api_key: str | None = None
         self.client: ollama.AsyncClient | None = None
         self.download_task: asyncio.Task | None = None
 
@@ -82,9 +84,15 @@ class OllamaConfigFlow(ConfigFlow, domain=DOMAIN):
         """Handle the initial step."""
         user_input = user_input or {}
         self.url = user_input.get(CONF_URL, self.url)
+        self.api_key = user_input.get(CONF_API_KEY, self.api_key)
         self.model = user_input.get(CONF_MODEL, self.model)
 
         if self.url is None:
+            return self.async_show_form(
+                step_id="user", data_schema=STEP_USER_DATA_SCHEMA, last_step=False
+            )
+
+        if self.api_key is None:
             return self.async_show_form(
                 step_id="user", data_schema=STEP_USER_DATA_SCHEMA, last_step=False
             )
@@ -93,7 +101,7 @@ class OllamaConfigFlow(ConfigFlow, domain=DOMAIN):
 
         try:
             self.client = ollama.AsyncClient(
-                host=self.url, verify=get_default_context()
+                host=self.url, verify=get_default_context(), headers={"Authorization": f"Bearer {self.api_key}"}
             )
             async with asyncio.timeout(DEFAULT_TIMEOUT):
                 response = await self.client.list()
@@ -144,7 +152,7 @@ class OllamaConfigFlow(ConfigFlow, domain=DOMAIN):
 
         return self.async_create_entry(
             title=_get_title(self.model),
-            data={CONF_URL: self.url, CONF_MODEL: self.model},
+            data={CONF_URL: self.url, CONF_MODEL: self.model, CONF_API_KEY: self.api_key},
         )
 
     async def async_step_download(
@@ -182,10 +190,11 @@ class OllamaConfigFlow(ConfigFlow, domain=DOMAIN):
         """Step after model downloading has succeeded."""
         assert self.url is not None
         assert self.model is not None
+        assert self.api_key is not None
 
         return self.async_create_entry(
             title=_get_title(self.model),
-            data={CONF_URL: self.url, CONF_MODEL: self.model},
+            data={CONF_URL: self.url, CONF_MODEL: self.model, CONF_API_KEY: self.api_key},
         )
 
     async def async_step_failed(
@@ -209,6 +218,7 @@ class OllamaOptionsFlow(OptionsFlow):
         """Initialize options flow."""
         self.url: str = config_entry.data[CONF_URL]
         self.model: str = config_entry.data[CONF_MODEL]
+        self.api_key: str = config_entry.data[CONF_API_KEY]
 
     async def async_step_init(
         self, user_input: dict[str, Any] | None = None
