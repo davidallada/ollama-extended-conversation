@@ -3,4 +3,4 @@ default_config:
 logger:
   default: info
   logs:
-    custom_components.ollama-extended-conversation: debug
+    custom_components.ollama_extended_conversation: debug

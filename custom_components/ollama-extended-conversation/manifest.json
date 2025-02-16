@@ -1,5 +1,5 @@
 {
-  "domain": "ollama-extended-conversation",
+  "domain": "ollama_extended_conversation",
   "name": "Ollama extended Conversation",
   "after_dependencies": ["assist_pipeline", "intent"],
   "codeowners": ["@davidallada"],
