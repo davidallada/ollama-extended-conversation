@@ -1,3 +1,5 @@
 {
-    "name": "ollama-extended-conversation"
+    "name": "ollama-extended-conversation",
+    "render_readme": true,
+    "homeassistant": "2024.1.0b0"
 }
